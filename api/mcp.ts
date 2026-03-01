@@ -1,12 +1,14 @@
 /**
- * Vercel Serverless Function — Streamable HTTP transport
+ * Vercel Edge Function — Streamable HTTP transport
  *
  * 各リクエストごとにサーバー + トランスポートを新規作成（ステートレス）
- * WebStandardStreamableHTTPServerTransport を使用
+ * Edge Runtime でSSEストリーミングをネイティブサポート
  */
 
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createServer } from '../src/server.js';
+
+export const config = { runtime: 'edge' };
 
 export default async function handler(request: Request): Promise<Response> {
   // CORS preflight
