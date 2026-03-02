@@ -9,6 +9,20 @@ const KFS_BASE = 'https://www.kfs.go.jp';
 const FETCH_TIMEOUT_MS = 15_000;
 
 /**
+ * URLがKFSドメインであることを検証（SSRF防止）
+ */
+function validateKfsUrl(input: string): string {
+  if (input.startsWith('http')) {
+    const url = new URL(input);
+    if (url.hostname !== 'www.kfs.go.jp') {
+      throw new Error(`不正なURLです。KFS配下のURLを指定してください: ${input}`);
+    }
+    return input;
+  }
+  return `${KFS_BASE}${input}`;
+}
+
+/**
  * タイムアウト付きでページを取得しShift_JISデコード
  * AbortControllerはbody読み取り完了まで有効
  */
@@ -37,7 +51,7 @@ async function fetchAndDecode(url: string, timeoutMs: number = FETCH_TIMEOUT_MS)
  * 個別事例ページ、idx目次ページ等に使用
  */
 export async function fetchKfsPage(path: string): Promise<string> {
-  const url = path.startsWith('http') ? path : `${KFS_BASE}${path}`;
+  const url = validateKfsUrl(path);
 
   const cached = kfsPageCache.get(url);
   if (cached) return cached;
@@ -52,7 +66,7 @@ export async function fetchKfsPage(path: string): Promise<string> {
  * MP系の税目一覧・カテゴリページに使用
  */
 export async function fetchKfsTopicPage(path: string): Promise<string> {
-  const url = path.startsWith('http') ? path : `${KFS_BASE}${path}`;
+  const url = validateKfsUrl(path);
 
   const cached = kfsTopicCache.get(url);
   if (cached) return cached;
@@ -66,6 +80,5 @@ export async function fetchKfsTopicPage(path: string): Promise<string> {
  * KFSページの完全URLを生成
  */
 export function getKfsUrl(path: string): string {
-  if (path.startsWith('http')) return path;
-  return `${KFS_BASE}${path}`;
+  return validateKfsUrl(path);
 }

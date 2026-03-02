@@ -7,30 +7,7 @@
  */
 
 import type { KfsTaxType, KfsTopicCategory, KfsCaseEntry, KfsCaseFullText } from './types.js';
-
-/**
- * HTML タグを除去してテキスト化
- */
-function stripHtml(html: string): string {
-  return html
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&emsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCharCode(parseInt(code, 16)))
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
+import { stripTags, stripHtmlBlock } from './html-utils.js';
 
 /**
  * MP/index.html から税目一覧を抽出
@@ -47,7 +24,7 @@ export function parseKfsTopicIndex(html: string): KfsTaxType[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     const topicPath = `/service/MP/${m[1]}`;
-    const name = stripHtml(m[2]).trim();
+    const name = stripTags(m[2]).trim();
     if (name) {
       results.push({ name, caseCount: 0, topicPath });
     }
@@ -78,7 +55,7 @@ export function parseKfsTopicCategories(html: string): KfsTopicCategory[] {
     const h2Content = h2Match[1];
     // img を含むh2はサイドバー→スキップ
     if (/<img/i.test(h2Content)) continue;
-    const categoryName = stripHtml(h2Content).trim();
+    const categoryName = stripTags(h2Content).trim();
     const section = h2Match[2];
 
     // セクション内の<a>リンク + 件数を抽出（href属性の位置に依存しない）
@@ -88,7 +65,7 @@ export function parseKfsTopicCategories(html: string): KfsTopicCategory[] {
 
     while ((linkMatch = linkRe.exec(section)) !== null) {
       const href = linkMatch[1];
-      const name = stripHtml(linkMatch[2]).trim();
+      const name = stripTags(linkMatch[2]).trim();
       // href がHTML拡張子でカテゴリリンクのもの
       if (href.endsWith('.html') && !href.includes('/')) {
         // 直後の（X件）を探す（空白・改行に対応するため50文字先読み）
@@ -144,13 +121,13 @@ export function parseCollectionIndex(
       if (/<img/i.test(h2Content)) continue;
       // <span>から取得、なければテキスト全体
       const spanMatch = h2Content.match(/<span[^>]*>([\s\S]*?)<\/span>/i);
-      const text = spanMatch ? stripHtml(spanMatch[1]) : stripHtml(h2Content);
+      const text = spanMatch ? stripTags(spanMatch[1]) : stripTags(h2Content);
       if (text && text.includes('関係')) {
         currentTaxType = text;
       }
     } else if (match[2] !== undefined) {
       // h3: カテゴリ
-      currentCategory = stripHtml(match[2]);
+      currentCategory = stripTags(match[2]);
     } else if (match[3] !== undefined) {
       // div.article: 事例エントリ
       const articleHtml = match[3];
@@ -162,7 +139,7 @@ export function parseCollectionIndex(
       let linkMatch: RegExpExecArray | null;
       while ((linkMatch = linkRe.exec(articleHtml)) !== null) {
         const href = linkMatch[1];
-        const text = stripHtml(linkMatch[2]).trim();
+        const text = stripTags(linkMatch[2]).trim();
         if (text === '裁決事例' && href.includes('index.html')) {
           caseUrl = resolveUrl(baseUrl, href);
         } else if (text === '裁決事例要旨') {
@@ -179,7 +156,7 @@ export function parseCollectionIndex(
       while ((pMatch = pRe.exec(articleHtml)) !== null) {
         const cls = pMatch[1] || '';
         if (cls.includes('article_point') || cls.includes('article_date')) continue;
-        const text = stripHtml(pMatch[2]);
+        const text = stripTags(pMatch[2]);
         if (text.length > 20) {
           summary = text.replace(/^\u3000+/, ''); // 全角スペース除去
           break;
@@ -190,7 +167,7 @@ export function parseCollectionIndex(
       let date = '';
       const dateMatch = articleHtml.match(/<p\s[^>]*class="article_date"[^>]*>([\s\S]*?)<\/p>/i);
       if (dateMatch) {
-        date = stripHtml(dateMatch[1]).replace(/裁決/g, '').trim();
+        date = stripTags(dateMatch[1]).replace(/裁決/g, '').trim();
       }
 
       results.push({
@@ -252,7 +229,7 @@ export function parseCaseFullText(html: string): KfsCaseFullText | null {
 }
 
 function extractFullText(saiketsuHtml: string, fullHtml: string): KfsCaseFullText {
-  const body = stripHtml(saiketsuHtml);
+  const body = stripHtmlBlock(saiketsuHtml);
 
   // 裁決日を抽出（全角・半角数字混在に対応）
   let date = '';
@@ -291,7 +268,7 @@ export function parseCollectionList(html: string): { no: number; idxUrl: string;
     results.push({
       no,
       idxUrl: `/service/JP/${m[1]}`,
-      label: stripHtml(m[3]).trim(),
+      label: stripTags(m[3]).trim(),
     });
   }
 
@@ -300,16 +277,28 @@ export function parseCollectionList(html: string): { no: number; idxUrl: string;
 }
 
 /**
- * 相対URLを解決
+ * 相対URLを解決（KFSドメイン検証付き・SSRF防止）
  */
 function resolveUrl(baseUrl: string, href: string): string {
-  if (href.startsWith('http')) return href;
+  if (href.startsWith('http')) {
+    const url = new URL(href);
+    if (url.hostname !== 'www.kfs.go.jp') {
+      throw new Error(`不正なURLです。KFS配下のURLを指定してください: ${href}`);
+    }
+    return href;
+  }
   if (href.startsWith('/')) return `https://www.kfs.go.jp${href}`;
 
   // ../139/01/index.html → baseUrl の親ディレクトリから解決
   try {
-    return new URL(href, baseUrl).href;
-  } catch {
+    const resolved = new URL(href, baseUrl).href;
+    const url = new URL(resolved);
+    if (url.hostname !== 'www.kfs.go.jp') {
+      throw new Error(`不正なURLです。KFS配下のURLを指定してください: ${resolved}`);
+    }
+    return resolved;
+  } catch (e) {
+    if (e instanceof Error && e.message.includes('不正なURL')) throw e;
     // フォールバック: 単純に ../ を除去
     const clean = href.replace(/^(\.\.\/)+/, '');
     return `https://www.kfs.go.jp/service/JP/${clean}`;

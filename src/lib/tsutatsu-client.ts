@@ -8,13 +8,27 @@ import { tsutatsuTocCache, tsutatsuPageCache } from './cache.js';
 const NTA_BASE = 'https://www.nta.go.jp';
 
 /**
+ * URLがNTAドメインであることを検証（SSRF防止）
+ */
+function validateNtaUrl(input: string): string {
+  if (input.startsWith('http')) {
+    const url = new URL(input);
+    if (url.hostname !== 'www.nta.go.jp') {
+      throw new Error(`不正なURLです。NTA配下のURLを指定してください: ${input}`);
+    }
+    return input;
+  }
+  return `${NTA_BASE}${input}`;
+}
+
+/**
  * NTAページを取得し、エンコーディングを変換
  */
 export async function fetchNtaPage(
   path: string,
   encoding: 'shift_jis' | 'utf-8' = 'shift_jis'
 ): Promise<string> {
-  const url = path.startsWith('http') ? path : `${NTA_BASE}${path}`;
+  const url = validateNtaUrl(path);
 
   // ページキャッシュ
   const cached = tsutatsuPageCache.get(url);
@@ -70,9 +84,8 @@ export async function fetchTsutatsuToc(
 }
 
 /**
- * NTAページの完全URLを生成
+ * NTAページの完全URLを生成（ドメイン検証付き）
  */
 export function getNtaUrl(path: string): string {
-  if (path.startsWith('http')) return path;
-  return `${NTA_BASE}${path}`;
+  return validateNtaUrl(path);
 }

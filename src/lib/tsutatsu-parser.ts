@@ -5,6 +5,7 @@
  */
 
 import type { TsutatsuTocLink, TsutatsuEntry } from './types.js';
+import { stripTags } from './html-utils.js';
 
 /**
  * TOCページのHTMLからリンク一覧を抽出
@@ -57,7 +58,7 @@ function parseTocLinks_Kihon(html: string): TsutatsuTocLink[] {
 
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
-    const text = stripHtml(match[2]).trim();
+    const text = stripTags(match[2]).trim();
 
     // 通達ページへのリンクのみ（/law/tsutatsu/ を含む）
     if (!href.includes('/law/tsutatsu/')) continue;
@@ -87,7 +88,7 @@ function parseTocLinks_SochihoLi(html: string, tocPath?: string): TsutatsuTocLin
   while ((match = pattern.exec(html)) !== null) {
     const tsutatsuNumber = normalizeDashes(match[1].trim());
     const rawHref = match[2];
-    const text = stripHtml(match[3]).trim();
+    const text = stripTags(match[3]).trim();
 
     const fullHref = resolveHref(rawHref, tocPath);
     const href = fullHref.split('#')[0];
@@ -136,7 +137,7 @@ function parseTocLinks_SochihoP(html: string, tocPath?: string): TsutatsuTocLink
   while ((match = pattern1.exec(html)) !== null) {
     const tsutatsuNumber = normalizeDashes(match[1].trim());
     const rawHref = match[2];
-    const text = stripHtml(match[3]).trim();
+    const text = stripTags(match[3]).trim();
 
     const fullHref = resolveHref(rawHref, tocPath);
     const href = fullHref.split('#')[0];
@@ -158,7 +159,7 @@ function parseTocLinks_SochihoP(html: string, tocPath?: string): TsutatsuTocLink
   while ((match = pattern2.exec(html)) !== null) {
     const tsutatsuNumber = normalizeDashes(match[1].trim());
     const rawHref = match[2];
-    const text = stripHtml(match[3]).trim();
+    const text = stripTags(match[3]).trim();
 
     const fullHref = resolveHref(rawHref, tocPath);
     const href = fullHref.split('#')[0];
@@ -405,20 +406,6 @@ export function formatTocAsText(
 
 // --- 内部ヘルパー ---
 
-/** HTMLタグを除去 */
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&emsp;/g, '　')
-    .replace(/&ensp;/g, ' ')
-    .replace(/&thinsp;/g, '')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
-    .replace(/&quot;/g, '"');
-}
 
 /** テキストから条文番号プレフィックスを抽出 */
 function extractArticlePrefix(text: string): string | undefined {
@@ -469,7 +456,7 @@ function findPrecedingCaption(html: string, startIdx: number): string {
   const h2Matches = [...before.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)];
   if (h2Matches.length === 0) return '';
   const lastH2 = h2Matches[h2Matches.length - 1];
-  return stripHtml(lastH2[1]).trim();
+  return stripTags(lastH2[1]).trim();
 }
 
 /** エントリのテキスト本文を抽出 */
@@ -503,7 +490,7 @@ function extractEntryText(html: string, startIdx: number): string {
   text = text.replace(/<\/p>/gi, '\n');
   text = text.replace(/<p[^>]*>/gi, '');
   // HTMLタグ除去
-  text = stripHtml(text);
+  text = stripTags(text);
   // 連続空行を整理
   text = text.replace(/\n{3,}/g, '\n\n');
   return text.trim();

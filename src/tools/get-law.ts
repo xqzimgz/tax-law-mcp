@@ -10,8 +10,8 @@ export function registerGetLawTool(server: McpServer) {
       law_name: z.string().describe(
         '法令名または略称。例: "所得税法", "法人税法", "租税特別措置法", "所法", "措法", "所得税法施行令", "所令"'
       ),
-      article: z.string().describe(
-        '条文番号。例: "33", "33の2", "57の3", "第33条"'
+      article: z.string().optional().describe(
+        '条文番号（format="toc"の場合は省略可）。例: "33", "33の2", "57の3", "第33条"'
       ),
       paragraph: z.number().optional().describe(
         '項番号（省略時は条文全体）。例: 1, 2'
@@ -32,6 +32,16 @@ export function registerGetLawTool(server: McpServer) {
               type: 'text' as const,
               text: `# ${result.lawTitle} — 目次\n\n${result.toc}\n\n---\n出典：e-Gov法令検索（デジタル庁）\nURL: ${result.egovUrl}`,
             }],
+          };
+        }
+
+        if (!args.article) {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: 'エラー: 条文番号（article）を指定してください。目次を取得する場合は format="toc" を指定してください。',
+            }],
+            isError: true,
           };
         }
 
