@@ -18,8 +18,8 @@ info:
     url: "https://github.com/kentaroajisaka/tax-law-mcp"
 
 servers:
-  - url: "https://<your-vercel-domain>"
-    description: "Vercelデプロイ先（自身のURLに書き換えてください）"
+  - url: "https://tax-law-mcp.vercel.app"
+    description: "本番環境"
 
 paths:
   /api/get-law:
